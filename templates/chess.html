@@ -129,7 +129,7 @@
         }
 
         function makeMove(from, to) {
-            const moveNotation = `${String.fromCharCode(97 + from.col)}${8 - from.row}->${String.fromCharCode(97 + to.col)}${8 - to.row}`;
+            const moveNotation = `${String.fromCharCode(97 + from.col)}${8 - from.row}${String.fromCharCode(97 + to.col)}${8 - to.row}`;
 
             // Update board state locally
             board[to.row][to.col] = draggedPiece;
