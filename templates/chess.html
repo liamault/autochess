@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Board</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .board-container {
+            display: grid;
+            grid-template-columns: 40px repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px) 40px;
+        }
+        .label {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+            background-color: #f4f4f9;
+        }
+        #chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 2px solid black;
+            grid-column: 2 / 10;
+            grid-row: 1 / 9;
+        }
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+        }
+        .white {
+            background-color: #eee;
+        }
+        .black {
+            background-color: #555;
+            color: white;
+        }
+        .piece {
+            cursor: grab;
+        }
+    </style>
+</head>
+<body>
+    <div class="board-container">
+        <!-- Left row labels -->
+        <div class="label">8</div>
+        <div id="chess-board"></div>
+        <div class="label">7</div>
+        <div class="label">6</div>
+        <div class="label">5</div>
+        <div class="label">4</div>
+        <div class="label">3</div>
+        <div class="label">2</div>
+        <div class="label">1</div>
+
+        <!-- Bottom row labels -->
+        <div class="label"></div>
+        <div class="label">A</div>
+        <div class="label">B</div>
+        <div class="label">C</div>
+        <div class="label">D</div>
+        <div class="label">E</div>
+        <div class="label">F</div>
+        <div class="label">G</div>
+        <div class="label">H</div>
+    </div>
+    <script>
+        const board = JSON.parse('{{ board|safe }}');
+        const chessBoard = document.getElementById('chess-board');
+
+        let draggedPiece = null;
+        let fromSquare = null;
+
+        function renderBoard() {
+            chessBoard.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    square.classList.add((i + j) % 2 === 0 ? 'white' : 'black');
+                    square.dataset.row = i;
+                    square.dataset.col = j;
+
+                    const piece = board[i][j];
+                    if (piece) {
+                        const pieceElement = document.createElement('div');
+                        pieceElement.textContent = piece;
+                        pieceElement.classList.add('piece');
+                        pieceElement.draggable = true;
+                        pieceElement.addEventListener('dragstart', (e) => {
+                            draggedPiece = piece;
+                            fromSquare = { row: i, col: j };
+                        });
+                        square.appendChild(pieceElement);
+                    }
+
+                    square.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                    });
+
+                    square.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        if (draggedPiece && fromSquare) {
+                            const toSquare = {
+                                row: parseInt(square.dataset.row),
+                                col: parseInt(square.dataset.col),
+                            };
+                            makeMove(fromSquare, toSquare);
+                        }
+                    });
+
+                    chessBoard.appendChild(square);
+                }
+            }
+        }
+
+        function makeMove(from, to) {
+            const moveNotation = `${String.fromCharCode(97 + from.col)}${8 - from.row}->${String.fromCharCode(97 + to.col)}${8 - to.row}`;
+
+            // Update board state locally
+            board[to.row][to.col] = draggedPiece;
+            board[from.row][from.col] = '';
+
+            // Send the move to the server
+            fetch('/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    old_state: board,
+                    new_state: board,
+                    move_notation: moveNotation,
+                }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.message);
+                });
+
+            renderBoard();
+        }
+
+        renderBoard();
+    </script>
+</body>
+</html>
