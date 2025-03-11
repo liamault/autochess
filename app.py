@@ -154,7 +154,7 @@ def chessCoordToPhysicalCoord(coord):
 #change to moonraker later
 def sendCoordMove(coord):
     x, y = chessCoordToPhysicalCoord(coord)
-    gcode = f'_CLIENT_LINEAR_MOVE X={x} Y={y} F=7800 ABSOLUTE=1'
+    gcode = f'_CLIENT_LINEAR_MOVE X={x} Y={y} F=1950 ABSOLUTE=1'
     print(gcode) 
              
     send_gcode(ws, gcode)
@@ -175,11 +175,10 @@ def sendTileDeltaMove(delta,direction):
         x = 0
         y = -delta
     
-    gcode = f'_CLIENT_LINEAR_MOVE X={x} Y={y} F=7800 ABSOLUTE=0'
+    gcode = f'_CLIENT_LINEAR_MOVE X={x} Y={y} F=1950 ABSOLUTE=0'
     
     send_gcode(ws, gcode)    
 
-#also change to moonraker
 def activateMagnet(active):
     if active:
         send_gcode(ws, "MAG_ON")
